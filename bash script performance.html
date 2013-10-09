@@ -1,0 +1,284 @@
+Better Bash Scripting in 15 Minutes
+</h3>
+<div class="post-header">
+<div class="post-header-line-1"></div>
+</div>
+<div class="post-body entry-content" id="post-body-1457578239306815665" itemprop="description articleBody">
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://1.bp.blogspot.com/-QE9dDUpFECc/UAyAWZx1p7I/AAAAAAAAAE8/OXBntps8LAA/s1600/blank_computer_screen.png" imageanchor="1" style="clear: left; float: left; margin-bottom: 1em; margin-right: 1em;"><img src="https://lh3.ggpht.com/-QE9dDUpFECc/UAyAWZx1p7I/AAAAAAAAAE8/OXBntps8LAA/s200/blank_computer_screen.png" border="0" height="125" width="200"></a></div>
+<br>
+<span style="background-color: white;"><span style="font-family: Arial, Helvetica, sans-serif;">The tips and tricks below originally appeared as one of Google's "T</span></span><span style="background-color: white; font-family: Arial, Helvetica, sans-serif;">esting on the Toilet" (TOTT) episodes.&nbsp;</span><br>
+<span style="font-family: Arial, Helvetica, sans-serif;">This is a revised and augmented version.</span><br>
+<br>
+<br>
+<br>
+<h2>
+</h2>
+<h2>
+
+
+
+
+Safer Scripting</h2>
+<div>
+<b id="internal-source-marker_0.37467313767410815" style="background-color: white; font-weight: normal;"><span style="background-color: transparent; font-family: Arial; font-size: 15px; vertical-align: baseline; white-space: pre-wrap;">I start every bash script with the following prolog:</span></b><br>
+<blockquote class="tr_bq">
+<span style="background-color: white; font-family: 'Courier New', Courier, monospace;">#!/bin/bash</span><br>
+<span style="background-color: white; font-family: 'Courier New', Courier, monospace;">set -o nounset</span><br>
+<span style="font-family: 'Courier New', Courier, monospace;">set -o errexit</span></blockquote>
+<span style="font-family: Arial;"><span style="font-size: 15px; white-space: pre-wrap;">This will take care of two very common errors:</span></span><br>
+<ol>
+<li><span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">Referencing undefined variables (which default to "")&nbsp;</span></li>
+<li><span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">Ignoring failing commands</span></li>
+</ol>
+<span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">The two settings also have shorthands (“-u” and “-e”) but the longer versions are more readable.</span><br>
+<span style="font-family: Arial;"><span style="font-size: 15px; white-space: pre-wrap;"><br></span></span><span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">If a failing command is to be tolerated use this idiom:</span><br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">if ! &lt;possible failing command&gt; ; then<br> &nbsp; &nbsp; echo "failure ignored"<br> fi</span></blockquote>
+<div>
+<blockquote class="tr_bq">
+<blockquote class="tr_bq">
+</blockquote>
+</blockquote>
+<span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">Note that some Linux commands have options which as a side-effect suppress some failures, e.g.</span><br>
+<span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">“</span><span style="background-color: white; font-family: 'Courier New', Courier, monospace; font-size: 15px; white-space: pre-wrap;">mkdir -p</span><span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">” and “</span><span style="background-color: white; font-family: 'Courier New', Courier, monospace; font-size: 15px; white-space: pre-wrap;">rm -f</span><span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">”.</span><br>
+<span style="font-family: Arial;"><span style="font-size: 15px; white-space: pre-wrap;"><br></span></span><br>
+<span style="font-family: Arial;"><span style="font-size: 15px; white-space: pre-wrap;">Also note, that the “errexit” mode, while </span></span><span style="background-color: white; font-size: 15px; white-space: pre-wrap;"><span style="font-family: Arial;">a valuable first line of defense</span></span><span style="background-color: white; font-family: Arial; font-size: 15px; white-space: pre-wrap;">, does not catch all failures, i.e. under certain circumstances failing commands will go undetected.</span><br>
+<span style="font-family: Arial;"><span style="font-size: 15px; white-space: pre-wrap;">(For more info, have a look at </span></span><a href="https://groups.google.com/forum/?fromgroups#!topic/gnu.bash.bug/-9ySnEo1WrQ" style="font-family: Arial; font-size: 15px; white-space: pre-wrap;">this thread</a>.)<br>
+<br>
+<h2>
+
+
+
+
+Functions</h2>
+Bash lets you define functions which behave like other commands -- use them liberally; it will give your bash scripts a much needed boost in readability:<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">ExtractBashComments() {<br>&nbsp; &nbsp; egrep "^#"<br>}<span style="background-color: white;">&nbsp;</span></span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">cat myscript.sh | ExtractBashComments | wc<span style="background-color: white;">&nbsp;</span></span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">comments=$(ExtractBashComments &lt; myscript.sh)</span></blockquote>
+<br>
+Some more instructive examples:<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">SumLines() { &nbsp;# iterating over stdin - similar to awk &nbsp; &nbsp; &nbsp; <br>&nbsp; &nbsp; local sum=0<br>&nbsp; &nbsp; local line=””<br>&nbsp; &nbsp; while read line ; do<br>&nbsp; &nbsp; &nbsp; &nbsp; sum=$((${sum} + ${line}))<br>&nbsp; &nbsp; done<br>&nbsp; &nbsp; echo ${sum}<br>}</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">SumLines &lt; data_one_number_per_line.txt</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">log() { &nbsp;# classic logger <br>&nbsp; &nbsp;local prefix="[$(date +%Y/%m/%d\ %H:%M:%S)]: "<br>&nbsp; &nbsp;echo "${prefix} $@" &gt;&amp;2<br>}</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">log "INFO" "a message"</span></blockquote>
+<span style="font-family: 'Courier New', Courier, monospace;"><br></span><br>
+Try moving all bash code into functions leaving&nbsp;<span style="background-color: white;">only global variable/constant definitions and a call to “main” at the top-level.</span><br>
+<h2>
+</h2>
+<h2>
+
+
+
+
+Variable Annotations&nbsp;</h2>
+Bash allows for a limited form of variable annotations. The most important ones are:<br>
+<ul>
+<li><span style="background-color: white;"><span style="font-family: 'Courier New', Courier, monospace;">local</span> (for local variables inside a function)</span></li>
+<li><span style="background-color: white;"><span style="font-family: 'Courier New', Courier, monospace;">readonly</span> (for read-only variables)</span></li>
+</ul>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"># a useful idiom: DEFAULT_VAL can be overwritten<br># &nbsp; &nbsp; &nbsp; with an environment variable of the same name<br>readonly DEFAULT_VAL=${DEFAULT_VAL:-7}</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">myfunc() {<br>&nbsp; &nbsp;# initialize a local variable with the global default<br>&nbsp; &nbsp;local some_var=${DEFAULT_VAL}<br>&nbsp; &nbsp;...<br>}</span></blockquote>
+Note that it is possible to make a variable&nbsp;<span style="background-color: white;">read-only that wasn't before:</span><br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">x=5<br>x=6<br>readonly x<br>x=7 &nbsp; # failure</span></blockquote>
+<br>
+<span style="background-color: white;">Strive to annotate almost all variables in a bash script with either local or readonly.</span><br>
+<span style="background-color: white;"><br></span><br>
+<span style="background-color: white;"></span><br>
+<h2>
+
+
+
+
+Favor &nbsp;<span style="font-family: 'Courier New', Courier, monospace;">$() </span>over backticks (<span style="font-family: 'Courier New', Courier, monospace;">`</span>)</h2>
+Backticks are hard to read and in some fonts easily confused with single quotes.<br>
+<span style="font-family: 'Courier New', Courier, monospace;">$()</span>also permits nesting without the quoting headaches.<br>
+<br>
+<blockquote class="tr_bq">
+<span style="font-family: Courier New, Courier, monospace;"># both commands below print out: A-B-C-D<br>echo "A-`echo B-\`echo C-\\\`echo D\\\`\``"<br>echo "A-$(echo B-$(echo C-$(echo D)))"</span></blockquote>
+<br>
+<h2>
+
+
+
+
+Favor&nbsp;<span style="font-family: 'Courier New', Courier, monospace;">[[]]</span>&nbsp;(double brackets) over <span style="font-family: 'Courier New', Courier, monospace;">[]</span>&nbsp;</h2>
+<span style="font-family: 'Courier New', Courier, monospace;">[[]]</span> avoids problems like unexpected pathname expansion, offers some syntactical improvements,<br>
+and adds new functionality:<br>
+<br>
+<b>Operator &nbsp;</b> &nbsp; &nbsp; <b>&nbsp;Meaning</b><br>
+<span style="font-family: 'Courier New', Courier, monospace;">||&nbsp;</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; logical or (double brackets only)<br>
+<span style="font-family: 'Courier New', Courier, monospace;">&amp;&amp; &nbsp;</span> &nbsp; &nbsp; &nbsp; &nbsp; logical and (double brackets only)<br>
+<span style="font-family: 'Courier New', Courier, monospace;">&lt; &nbsp;&nbsp;</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;string comparison (no escaping necessary within double brackets)<br>
+<span style="font-family: 'Courier New', Courier, monospace;">-lt </span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;numerical comparison<br>
+<span style="font-family: 'Courier New', Courier, monospace;">= &nbsp;</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;string equality<br>
+<span style="font-family: 'Courier New', Courier, monospace;">==&nbsp; &nbsp;</span>&nbsp; &nbsp; &nbsp; string matching with globbing (double brackets only, see below)<br>
+<span style="font-family: 'Courier New', Courier, monospace;">=~&nbsp;</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;string matching with regular expressions (double brackets only , see below)<br>
+<span style="font-family: 'Courier New', Courier, monospace;">-n&nbsp;</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;string is non-empty<span style="background-color: white;">&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</span><br>
+<span style="font-family: 'Courier New', Courier, monospace;">-z&nbsp;</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;string is empty<br>
+<span style="font-family: 'Courier New', Courier, monospace;">-eq</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;numerical equality<br>
+<br>
+<span style="font-family: 'Courier New', Courier, monospace;">-ne</span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;numerical inequality<br>
+<br>
+<b>single bracket</b><br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">[ "${name}" \&gt; "a" -o ${name} \&lt; "m" ]</span></blockquote>
+<br>
+<b>double brackets</b><br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">&nbsp;[[ "${name}" &gt; "a" &amp;&amp; "${name}" &lt; "m" &nbsp;]]</span></blockquote>
+<br>
+<h2>
+Regular Expressions/Globbing</h2>
+<br>
+These new capabilities within double brackets are best illustrated via examples:<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">t="abc123"<br>[[ "$t" == abc* ]] &nbsp; &nbsp; &nbsp; &nbsp; # true  (globbing)<br>[[ "$t" == "abc*" ]] &nbsp; &nbsp; &nbsp; # false (literal matching)<br>[[ "$t" =~ [abc]+[123]+ ]] # true (regular expression)<br>[[ "$t" =~ "abc*" ]] &nbsp; &nbsp; &nbsp; # false (literal matching)</span></blockquote>
+<span style="background-color: white;">Note, that starting with bash version 3.2 the regular or globbing expression</span><br>
+must not be quoted. If your expression contains whitespace you can store it in a variable:<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">r="a b+"<br>[[ "a bbb" =~ $r ]] &nbsp; &nbsp; &nbsp; &nbsp;# true<br>&nbsp; </span></blockquote>
+</div>
+<div>
+Globbing based string matching &nbsp;is also available via the case statement:<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">case $t in<br>abc*) <i>&nbsp;&lt;action&gt;</i> ;;<br>esac</span></blockquote>
+<br>
+<h2>
+
+
+
+String Manipulation</h2>
+Bash has a number of (underappreciated) ways to manipulate strings.<br>
+<br>
+<b>Basics</b><br>
+<blockquote class="tr_bq">
+<span style="font-family: Courier New, Courier, monospace;">f="path1/path2/file.ext"&nbsp;</span>&nbsp;</blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: Courier New, Courier, monospace;">len="${#f}"       # = 20 (string length)</span>&nbsp;</blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: Courier New, Courier, monospace;"># slicing: ${&lt;var&gt;:&lt;start&gt;} or ${&lt;var&gt;:&lt;start&gt;:&lt;length&gt;}<br>slice1="${f:6}"   # = "path2/file.ext"<br>slice2="${f:6:5}" # = "path2"<br>slice3="${f: -8}" # = "file.ext"(Note: space before "-")<br>pos=6<br>len=5<br>slice4="${f:${pos}:${len}}"  # = "path2"</span></blockquote>
+<br>
+<span style="background-color: white;"><b>Substitution (with globbing)</b></span><br>
+<blockquote class="tr_bq">
+<span style="background-color: white;"><span style="font-family: 'Courier New', Courier, monospace;">f="path1/path2/file.ext"&nbsp;</span></span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">single_subst="${f/path?/x}" &nbsp; # = "x/path2/file.ext"<br>global_subst="${f//path?/x}" &nbsp;# = "x/x/file.ext"</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"># string splitting<br>readonly DIR_SEP="/"<br>array=(${f//${DIR_SEP}/ })<br>second_dir="${arrray[1]}" &nbsp; &nbsp; # = path2</span></blockquote>
+</div>
+<div>
+<br></div>
+<div>
+<b>Deletion at beginning/end (with globbing)</b></div>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">f="path1/path2/file.ext"</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"><span style="background-color: white;"># deletion at string beginning&nbsp;</span><span style="background-color: white;">extension="${f#*.}" &nbsp;# = "ext"</span></span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"># greedy deletion at string beginning<br>filename="${f##*/}" &nbsp;# = "file.ext"</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"># deletion at string end<br>dirname="${f%/*}" &nbsp; &nbsp;# = "path1/path2"</span><span style="background-color: white;">&nbsp;</span></blockquote>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"># greedy deletion at end<br>root="${f%%/*}" &nbsp; &nbsp; &nbsp;# = "path1"</span></blockquote>
+<div>
+<br>
+<h2>
+
+
+Avoiding Temporary Files</h2>
+Some commands expect filenames as parameters &nbsp;so straightforward pipelining does not work.<br>
+This is where&nbsp;<span style="font-family: 'Courier New', Courier, monospace;">&lt;()</span> operator comes in handy as it takes a command and transforms it into something<br>
+which can be used as a filename:<br>
+<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"># download and diff two webpages<br>diff &lt;(wget -O - url1) &lt;(wget -O - url2)</span></blockquote>
+Also useful are "here documents" which allow arbitrary multi-line string to be passed<br>
+in on stdin. The two occurrences &nbsp;of 'MARKER' brackets the document.<br>
+'MARKER' can be any text.<br>
+<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;"># DELIMITER is an arbitrary string<br>command &nbsp;&lt;&lt; MARKER<br>...<br>${var}<br>$(cmd)<br>...<br>MARKER</span></blockquote>
+<br>
+If parameter substitution is undesirable simply put quotes around the&nbsp;first occurrence of MARKER:<br>
+<blockquote class="tr_bq">
+<span style="font-family: 'Courier New', Courier, monospace;">command  &lt;&lt; 'MARKER'<br>...<br>no substitution is happening here.<br> $ (dollar sign) is passed through verbatim.<br> ...<br>MARKER</span></blockquote>
+<br>
+<h2>
+
+
+
+Built-In Variables</h2>
+<h4>
+
+
+For reference</h4>
+$0 &nbsp; name of the script<br>
+$<i>n</i>&nbsp; &nbsp;positional parameters to script/function<br>
+$$&nbsp;<span class="Apple-tab-span" style="white-space: pre;">  </span>PID of the script<br>
+$!<span class="Apple-tab-span" style="white-space: pre;">    </span>PID of the last command executed (and run in the background)<br>
+$?<span class="Apple-tab-span" style="white-space: pre;">   </span>exit status of the last command &nbsp;(${PIPESTATUS} for pipelined commands)<br>
+$#<span class="Apple-tab-span" style="white-space: pre;">   </span>number of parameters to script/function<br>
+$@ &nbsp;all parameters to script/function (sees arguments as separate word)<br>
+$* &nbsp; &nbsp;all parameters to script/function (sees arguments as single word)<br>
+<h4>
+
+
+Note</h4>
+$* &nbsp; is <b>rarely</b> the right choice.<br>
+$@ handles empty parameter list and white-space within parameters correctly<br>
+$@ should usually be quoted like so "$@"<br>
+<br>
+<h2>
+
+
+Debugging</h2>
+To perform a syntax check/dry run of your bash script run:<br>
+<br>
+bash -n myscript.sh<br>
+<br>
+To produce a trace of every command executed run:<br>
+<br>
+bash -v myscripts.sh<br>
+<br>
+To produce a trace of the expanded command use:<br>
+<br>
+bash -x myscript.sh<br>
+<br>
+-v and -x can also be made permanent by adding<br>
+set -o verbose and set -o xtrace to the script prolog.<br>
+This might be useful if the script is run on a remote machine, e.g.<br>
+a build-bot and you are logging the output for remote inspection.<br>
+<br>
+<h2>
+<span style="background-color: white;">Signs you should not be using a bash script</span></h2>
+<ul>
+<li><span style="background-color: white;">your script is longer than a few hundred lines of code</span></li>
+<li><span style="background-color: white;">you need data structures beyond simple arrays</span></li>
+<li><span style="background-color: white;">you have a hard time working around quoting issues</span></li>
+<li><span style="background-color: white;">you do a lot of string manipulation</span></li>
+<li><span style="background-color: white;">you do not have much need for invoking other programs or pipe-lining them</span></li>
+<li><span style="background-color: white;">you worry about performance</span></li>
+</ul>
+<div>
+Instead consider scripting languages like Python or Ruby.<br>
+<br></div>
+<h2>
+
+
+
+
+References</h2>
+<ul>
+<li>Advanced Bash-Scripting Guide:&nbsp;<a href="http://tldp.org/LDP/abs/html/" style="background-color: white;">http://tldp.org/LDP/abs/html/</a></li>
+<li><a href="http://www.gnu.org/software/bash/manual/bashref.html">Bash Reference Manual</a>
